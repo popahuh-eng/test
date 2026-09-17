@@ -1,0 +1,17 @@
+{
+  "name": "trading-signal-platform",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\" \"pnpm --filter ml dev\"",
+    "build": "pnpm --filter frontend build && pnpm --filter backend build",
+    "migrate": "pnpm --filter backend migrate",
+    "seed:demo": "pnpm --filter backend seed:demo",
+    "test": "pnpm --filter backend test && pnpm --filter frontend test",
+    "lint": "pnpm --filter backend lint && pnpm --filter frontend lint",
+    "typecheck": "pnpm --filter backend typecheck && pnpm --filter frontend typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
