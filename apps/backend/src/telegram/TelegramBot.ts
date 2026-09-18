@@ -91,11 +91,12 @@ export class TradingTelegramBot {
     const socialSent = Number(signal.socialSentiment ?? 0).toFixed(2);
     const reasons = signal.reasonCodes?.join(', ') || 'TECHNICAL_CONFIRMATION';
 
+    const digits = Number(signal.entry) < 10 ? 4 : 2;
     const message = [
       `AI TRADING ALERT`,
       `${signal.symbol} | ${signal.direction}`,
-      `Entry: ${Number(signal.entry).toFixed(2)}`,
-      `SL: ${Number(signal.stopLoss).toFixed(2)} | TP: ${Number(signal.takeProfit).toFixed(2)}`,
+      `Entry: ${Number(signal.entry).toFixed(digits)}`,
+      `SL: ${Number(signal.stopLoss).toFixed(digits)} | TP: ${Number(signal.takeProfit).toFixed(digits)}`,
       `Risk: ${signal.riskPercent}% | R/R: ${Number(signal.riskReward).toFixed(2)}x`,
       `Probability UP: ${probUp}% | DOWN: ${probDown}%`,
       `Market Regime: ${signal.marketRegime}`,
@@ -107,12 +108,16 @@ export class TradingTelegramBot {
       `This is an AI-generated probabilistic signal, not a guarantee of profit. Never risk capital you cannot afford to lose.`,
     ].join('\n');
 
+    const isPublicUrl = config.frontendUrl && !config.frontendUrl.includes('localhost') && !config.frontendUrl.includes('127.0.0.1');
+    const firstRow: any[] = [];
+    if (isPublicUrl) {
+      firstRow.push({ text: 'Chart', url: `${config.frontendUrl}/instruments/${encodeURIComponent(signal.symbol)}` });
+    }
+    firstRow.push({ text: 'Paper Trade', callback_data: `paper_trade_${signal.id}` });
+
     const inlineKeyboard = {
       inline_keyboard: [
-        [
-          { text: 'Chart', url: `${config.frontendUrl}/instruments/${signal.symbol}` },
-          { text: 'Paper Trade', callback_data: `paper_trade_${signal.id}` },
-        ],
+        firstRow,
         [
           { text: 'Ignore', callback_data: `ignore_${signal.id}` },
           { text: 'Mute Symbol', callback_data: `mute_${signal.symbol}` },
@@ -202,10 +207,10 @@ export class TradingTelegramBot {
     }
 
     const text = rows
-      .map(
-        (s) =>
-          `[${s.direction}] ${s.symbol} @ ${Number(s.entry).toFixed(2)} | SL: ${Number(s.stopLoss).toFixed(2)} | TP: ${Number(s.takeProfit).toFixed(2)} (Conf: ${Math.round(Number(s.confidence) * 100)}%)`,
-      )
+      .map((s) => {
+        const d = Number(s.entry) < 10 ? 4 : 2;
+        return `[${s.direction}] ${s.symbol} @ ${Number(s.entry).toFixed(d)} | SL: ${Number(s.stopLoss).toFixed(d)} | TP: ${Number(s.takeProfit).toFixed(d)} (Conf: ${Math.round(Number(s.confidence) * 100)}%)`;
+      })
       .join('\n\n');
 
     await this.bot?.sendMessage(msg.chat.id, `Latest AI Signals:\n\n${text}`);

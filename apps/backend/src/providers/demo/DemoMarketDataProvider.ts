@@ -42,8 +42,9 @@ export class DemoMarketDataProvider implements MarketDataProvider {
     const tfMs       = this.getTimeframeMs(timeframe);
     const startMs    = Math.ceil(from.getTime() / tfMs) * tfMs;
     const endMs      = Math.floor(to.getTime() / tfMs) * tfMs;
-    const basePrice  = this.basePrices[symbol] ?? 1000.0;
-    const vol        = this.volatility[symbol]  ?? 0.01;
+    const norm       = symbol.replace(/[\/\-_]/g, '').toUpperCase();
+    const basePrice  = this.basePrices[norm] ?? this.basePrices[symbol] ?? 1000.0;
+    const vol        = this.volatility[norm]  ?? this.volatility[symbol]  ?? 0.01;
 
     // Number of candles in range
     const n = Math.max(0, Math.floor((endMs - startMs) / tfMs) + 1);
@@ -53,7 +54,7 @@ export class DemoMarketDataProvider implements MarketDataProvider {
     const seed = this.makeSeed(symbol, timeframe, startMs);
 
     // dt = timeframe as fraction of a trading day (6.5 h for FX/equity, 24 h crypto)
-    const tradingHoursPerDay = symbol === 'BTCUSDT' || symbol === 'ETHUSDT' ? 24 : 6.5;
+    const tradingHoursPerDay = norm === 'BTCUSDT' || norm === 'ETHUSDT' ? 24 : 6.5;
     const dt = tfMs / (tradingHoursPerDay * 3_600_000);
 
     // Generate n+1 prices so we can derive n candles
