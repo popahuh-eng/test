@@ -8,6 +8,7 @@ import type { Signal } from '@trading/shared';
 
 export class TradingTelegramBot {
   private bot: TelegramBot | null = null;
+  private knownChatIds: Set<string> = new Set();
 
   constructor() {
     if (!config.telegramBotToken) {
@@ -62,15 +63,19 @@ export class TradingTelegramBot {
     if (!sig) return;
 
     try {
+      const allChats = new Set<string>(this.knownChatIds);
+
       const subscribers = await db
         .select({ chatId: users.telegramChatId })
         .from(users)
         .where(isNotNull(users.telegramChatId));
 
       for (const s of subscribers) {
-        if (s.chatId) {
-          await this._sendToChat(s.chatId, sig);
-        }
+        if (s.chatId) allChats.add(s.chatId);
+      }
+
+      for (const cid of allChats) {
+        await this._sendToChat(cid, sig);
       }
     } catch (err: any) {
       logger.warn({ event: 'telegram_broadcast_err', err: err.message });
@@ -115,18 +120,34 @@ export class TradingTelegramBot {
       ],
     };
 
-    await this.bot.sendMessage(chatId, message, {
-      reply_markup: inlineKeyboard,
-    });
+    try {
+      await this.bot.sendMessage(chatId, message, {
+        reply_markup: inlineKeyboard,
+      });
+    } catch (err: any) {
+      logger.warn({ event: 'telegram_send_err', chatId, err: err.message });
+    }
   }
 
   private async handleStart(msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id.toString();
+    this.knownChatIds.add(chatId);
+
+    try {
+      const [firstUser] = await db.select().from(users).limit(1);
+      if (firstUser) {
+        await db
+          .update(users)
+          .set({ telegramChatId: chatId })
+          .where(eq(users.id, firstUser.id));
+      }
+    } catch {}
+
     const text = [
       `Trading Signal Platform Bot`,
       `Your Chat ID: ${chatId}`,
       ``,
-      `Link this chat ID in your Web Dashboard Settings to receive instant AI trading alerts.`,
+      `Status: SUBSCRIBED TO LIVE AI SIGNALS`,
       ``,
       `Available commands:`,
       `/status — Check system & provider health`,
