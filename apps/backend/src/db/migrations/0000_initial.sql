@@ -2,7 +2,7 @@
 -- Trading Signal Platform — Initial Schema Migration
 -- ============================================================
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- pgcrypto not needed in PG13+ (gen_random_uuid is built-in)
 
 -- ── Users ──
 CREATE TABLE IF NOT EXISTS users (

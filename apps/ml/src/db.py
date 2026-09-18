@@ -1,4 +1,4 @@
-﻿"""PostgreSQL connection pool and query helpers."""
+"""PostgreSQL connection pool and query helpers."""
 from __future__ import annotations
 
 import contextlib
@@ -22,11 +22,14 @@ _pool: Optional[pg_pool.ThreadedConnectionPool] = None
 def _get_pool() -> pg_pool.ThreadedConnectionPool:
     global _pool
     if _pool is None or _pool.closed:
-        logger.info("Initialising PostgreSQL connection pool")
+        dsn = settings.DATABASE_URL
+        if "connect_timeout" not in dsn:
+            sep = "&" if "?" in dsn else "?"
+            dsn = f"{dsn}{sep}connect_timeout=2"
         _pool = pg_pool.ThreadedConnectionPool(
             minconn=1,
             maxconn=5,
-            dsn=settings.DATABASE_URL,
+            dsn=dsn,
         )
     return _pool
 

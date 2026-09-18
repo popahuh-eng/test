@@ -1,6 +1,34 @@
-// ============================================================
-// Configuration — load and validate all environment variables
-// ============================================================
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Automatically load .env file if present
+function loadEnv(): void {
+  const candidates = [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), '../../.env'),
+    path.resolve(__dirname, '../../../.env'),
+    path.resolve(__dirname, '../../../../.env'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      const lines = fs.readFileSync(p, 'utf-8').split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim();
+          if (process.env[key] === undefined) {
+            process.env[key] = val;
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+loadEnv();
 
 function requireEnv(key: string): string {
   const val = process.env[key];
