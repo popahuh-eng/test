@@ -1,11 +1,12 @@
-// ============================================================
-// TopBar Component (Status Indicators, Account, Clean Layout)
-// ============================================================
 import React from 'react';
 import { useAuthStore } from '../../store/auth';
-import { LogOut, Activity } from 'lucide-react';
+import { LogOut, Activity, Cpu } from 'lucide-react';
 
-export function TopBar() {
+interface TopBarProps {
+  onToggleAi?: () => void;
+}
+
+export function TopBar({ onToggleAi }: TopBarProps) {
   const { user, clearAuth } = useAuthStore();
 
   return (
@@ -42,6 +43,25 @@ export function TopBar() {
 
       {/* User Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <button
+          onClick={onToggleAi}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-strong)',
+            color: 'var(--text-accent)',
+            padding: '4px 10px',
+            fontSize: '11px',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-mono)',
+          }}
+          title="Open AI Terminal Copilot"
+        >
+          <Cpu size={12} />
+          <span>AI COPILOT</span>
+        </button>
         {user && (
           <span
             style={{

@@ -2,7 +2,7 @@
 // Signals Routes — /api/signals (protected)
 // ============================================================
 import type { FastifyInstance } from 'fastify';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, or, isNull, desc } from 'drizzle-orm';
 import { db } from '../db';
 import { signals } from '../db/schema';
 import { authenticate } from '../middleware/auth';
@@ -53,7 +53,7 @@ export async function signalRoutes(fastify: FastifyInstance): Promise<void> {
       const page = Math.max(Number(pageStr ?? 1), 1);
       const offset = (page - 1) * limit;
 
-      const conditions = [eq(signals.userId, userId)];
+      const conditions = [or(eq(signals.userId, userId), isNull(signals.userId))];
       if (symbol) conditions.push(eq(signals.symbol, symbol.toUpperCase()));
 
       const rows = await db

@@ -1,13 +1,13 @@
-// ============================================================
-// Layout Component (Sidebar + TopBar + Safety Banner + Outlet)
-// ============================================================
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { AiDrawer } from '../AiAssistant/AiDrawer';
 import { ShieldAlert } from 'lucide-react';
 
 export function Layout() {
+  const [isAiOpen, setIsAiOpen] = useState(false);
+
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
       <Sidebar />
@@ -17,7 +17,7 @@ export function Layout() {
           <ShieldAlert size={14} />
           <span>Paper Trading Mode Active — Simulation Only. No Real Broker Orders Sent.</span>
         </div>
-        <TopBar />
+        <TopBar onToggleAi={() => setIsAiOpen((prev) => !prev)} />
         <main
           style={{
             flex: 1,
@@ -29,6 +29,8 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <AiDrawer isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
     </div>
   );
 }

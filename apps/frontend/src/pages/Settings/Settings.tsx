@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { LoadingSpinner } from '../../components/ui/Loading';
+import { getAiConfig, saveAiConfig } from '../../config/ai';
 
 export function Settings() {
   const [loading, setLoading] = useState(true);
@@ -145,6 +146,79 @@ export function Settings() {
           </Button>
         </form>
       </Card>
+
+      {/* AI Copilot Configuration */}
+      <AiSettingsCard />
     </div>
+  );
+}
+
+function AiSettingsCard() {
+  const initial = getAiConfig();
+  const [apiKey, setApiKey] = useState(initial.apiKey);
+  const [baseUrl, setBaseUrl] = useState(initial.baseUrl);
+  const [model, setModel] = useState(initial.model);
+  const [saved, setSaved] = useState(false);
+
+  const handleSaveAi = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveAiConfig({ apiKey, baseUrl, model });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  return (
+    <Card
+      title="AI COPILOT & LLM GATEWAY"
+      subtitle="OrcaRouter / OpenAI-compatible endpoint credentials"
+    >
+      <form onSubmit={handleSaveAi} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {saved && (
+          <div
+            style={{
+              padding: '8px 12px',
+              backgroundColor: 'var(--long-bg)',
+              border: '1px solid var(--long)',
+              color: 'var(--long)',
+              fontSize: '11px',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            AI CREDENTIALS SAVED TO LOCAL STORAGE
+          </div>
+        )}
+
+        <Input
+          label="AI API Key"
+          type="text"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="sk-orca-..."
+          required
+        />
+
+        <Input
+          label="Gateway Base URL"
+          type="text"
+          value={baseUrl}
+          onChange={(e) => setBaseUrl(e.target.value)}
+          placeholder="https://api.orcarouter.ai/v1"
+          required
+        />
+
+        <Input
+          label="Model Identifier"
+          type="text"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          placeholder="openai/gpt-4o-mini"
+          required
+        />
+
+        <Button type="submit" variant="secondary" style={{ marginTop: '8px' }}>
+          UPDATE AI CONFIGURATION
+        </Button>
+      </form>
+    </Card>
   );
 }

@@ -1,8 +1,5 @@
-// ============================================================
-// Telegram Bot — Signals, Alerts & Account Management
-// ============================================================
 import TelegramBot from 'node-telegram-bot-api';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, isNotNull } from 'drizzle-orm';
 import { db } from '../db';
 import { users, signals, instruments, paperAccounts, paperTrades } from '../db/schema';
 import { config } from '../config';
@@ -54,9 +51,33 @@ export class TradingTelegramBot {
   }
 
   /**
-   * Sends AI signal notification to specified Telegram chat.
+   * Broadcast signal to all users who registered their Telegram Chat ID, or a specific chat ID.
    */
-  async sendSignalAlert(chatId: string, signal: Signal): Promise<void> {
+  async sendSignalAlert(target: string | any, maybeSignal?: any): Promise<void> {
+    if (!this.bot) return;
+    if (typeof target === 'string' && maybeSignal) {
+      return this._sendToChat(target, maybeSignal);
+    }
+    const sig = (typeof target === 'object' ? target : maybeSignal);
+    if (!sig) return;
+
+    try {
+      const subscribers = await db
+        .select({ chatId: users.telegramChatId })
+        .from(users)
+        .where(isNotNull(users.telegramChatId));
+
+      for (const s of subscribers) {
+        if (s.chatId) {
+          await this._sendToChat(s.chatId, sig);
+        }
+      }
+    } catch (err: any) {
+      logger.warn({ event: 'telegram_broadcast_err', err: err.message });
+    }
+  }
+
+  private async _sendToChat(chatId: string, signal: any): Promise<void> {
     if (!this.bot) return;
 
     const probUp = Math.round(Number(signal.probabilityUp) * 100);
